@@ -1,0 +1,455 @@
+index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Learning Chat</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121212;
+            color: #e2e8f0;
+            overflow: hidden; /* Hide overflow from the large animated background */
+        }
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: #2d3748;
+            border-radius: 10px;
+        }
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 10px;
+        }
+        .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+
+        /* Animated background effect */
+        .animated-background {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, #3b82f6, #a855f7, #1e293b 70%);
+            animation: pulse-and-shift 25s infinite ease-in-out;
+            opacity: 0.3;
+            z-index: -1;
+        }
+        
+        @keyframes pulse-and-shift {
+            0% {
+                transform: scale(1) translate(0, 0);
+                filter: blur(100px);
+            }
+            50% {
+                transform: scale(1.1) translate(15%, 15%);
+                filter: blur(150px);
+            }
+            100% {
+                transform: scale(1) translate(0, 0);
+                filter: blur(100px);
+            }
+        }
+        /* Custom styles for chat bubbles */
+        .ai-message {
+            position: relative;
+        }
+        .ai-message-bubble {
+            display: flex;
+            align-items: center;
+        }
+        .ai-message-actions {
+            position: absolute;
+            bottom: -20px;
+            left: 0;
+            display: none;
+            gap: 8px;
+            padding: 4px;
+            background: #333;
+            border-radius: 8px;
+        }
+        .ai-message:hover .ai-message-actions {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <!-- Animated Background Layer -->
+    <div class="animated-background"></div>
+
+    <!-- Main Chat Interface -->
+    <main class="flex-grow flex flex-col items-center md:justify-center p-0 md:p-8 z-10">
+        <section class="w-full max-w-2xl h-full bg-gray-900 rounded-none md:rounded-2xl shadow-xl flex flex-col">
+            
+            <!-- Chat Header -->
+            <header class="bg-gray-800 p-4 border-b border-gray-700 rounded-t-none md:rounded-t-2xl flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                        <!-- New, professional AI logo -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                            <path d="M12 2a9 9 0 0 0-9 9c0 4.965 4.035 9 9 9s9-4.035 9-9a9 9 0 0 0-9-9zm0 16.5A7.5 7.5 0 1 1 12 4a7.5 7.5 0 0 1 0 15.5zm-.75-7a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm1.5-1.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zM12 9a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zM10.5 12a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm3 0a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5z"/>
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-lg font-semibold text-gray-200">Gemini</span>
+                        <span class="text-sm text-green-400">Online</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Chat History -->
+            <div id="chat-history" class="flex-grow overflow-y-auto p-4 space-y-4 scrollbar-custom">
+                <!-- Date Header -->
+                <div class="text-center text-gray-400 text-sm my-4">Today</div>
+                
+                <!-- Initial AI Welcome Message -->
+                <div class="flex justify-start">
+                    <div class="bg-gray-800 text-gray-200 rounded-2xl p-4 max-w-[80%] shadow-sm ai-message">
+                        <div class="ai-message-bubble">
+                            <p>Hello! I'm Gemini, a large language model trained by Google. How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="p-4 border-t border-gray-700">
+                <div class="flex items-center gap-2">
+                    <input type="text" id="chat-input" placeholder="Message Gemini..."
+                           class="flex-grow border border-gray-700 bg-gray-800 text-gray-200 rounded-full px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                    <!-- New mode-switcher button with camera logo -->
+                    <button id="mode-btn"
+                            class="bg-gray-700 text-white rounded-full p-3 hover:bg-gray-600 transition-colors shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                            <path d="M12 9a3.75 3.75 0 100 7.5A3.75 3.75 0 0012 9z" />
+                            <path fill-rule="evenodd" d="M9.337 3.018a.75.75 0 01.472-.514l3.75-1.125a.75.75 0 01.851.942l-1.047 4.192a.75.75 0 01-.625.568H6.634a.75.75 0 01-.625-.568L4.96 3.446a.75.75 0 01.851-.942l3.75 1.125c.162.049.32.11.472.181zM14.242 5.024a.75.75 0 01.373.535l1.016 4.194c.05.205-.034.417-.234.543l-3.633 2.285a.75.75 0 01-.849-.24l-1.884-2.226a.75.75 0 01-.24-.849l2.285-3.633a.75.75 0 01.543-.234zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <button id="send-btn"
+                            class="bg-indigo-600 text-white rounded-full px-4 py-3 font-medium hover:bg-indigo-700 transition-colors shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                            <path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.917H12.75a.75.75 0 0 1 0 1.5H4.984l-2.432 7.917a.75.75 0 0 0 .926.94 60.599 60.599 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.599 60.599 0 0 0 3.478 2.405Z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const chatInput = document.getElementById('chat-input');
+        const sendBtn = document.getElementById('send-btn');
+        const modeBtn = document.getElementById('mode-btn');
+        const chatHistory = document.getElementById('chat-history');
+
+        let isImageMode = false;
+        
+        // Helper function to convert base64 PCM data to a WAV Blob
+        function pcmToWav(pcm16, sampleRate) {
+            const numChannels = 1;
+            const bytesPerSample = 2;
+            const blockAlign = numChannels * bytesPerSample;
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = pcm16.byteLength;
+
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            // RIFF header
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + dataSize, true);
+            writeString(view, 8, 'WAVE');
+
+            // fmt chunk
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM format
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, byteRate, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, 16, true); // 16 bits per sample
+
+            // data chunk
+            writeString(view, 36, 'data');
+            view.setUint32(40, dataSize, true);
+
+            // Write PCM data
+            for (let i = 0; i < pcm16.length; i++) {
+                view.setInt16(44 + i * 2, pcm16[i], true);
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        // Helper function to decode base64
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function addMessage(text, isUser, isImage = false, originalText = null) {
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('flex', isUser ? 'justify-end' : 'justify-start');
+
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('rounded-2xl', 'p-4', 'max-w-[80%]', 'shadow-sm', 'transition-all');
+            
+            if (!isUser) {
+                messageBubble.classList.add('ai-message');
+            }
+
+            messageBubble.classList.add(isUser ? 'bg-indigo-600' : 'bg-gray-800', isUser ? 'text-white' : 'text-gray-200');
+            
+            if (isUser && !isImage) {
+                messageBubble.classList.add('bg-gradient-to-r', 'from-indigo-600', 'to-blue-500');
+            }
+            
+            if (isImage) {
+                messageBubble.innerHTML = `<img src="${text}" class="rounded-2xl shadow-lg w-full h-auto object-cover">`;
+            } else {
+                messageBubble.innerHTML = `<p>${text}</p>`;
+                if (!isUser && originalText) {
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.classList.add('ai-message-actions', 'absolute', 'bottom-0', 'left-0');
+
+                    // Summarize button
+                    const summarizeBtn = document.createElement('button');
+                    summarizeBtn.innerHTML = `
+                        <span class="text-sm font-semibold">✨Summary✨</span>
+                    `;
+                    summarizeBtn.classList.add('bg-gray-700', 'text-white', 'p-2', 'rounded-full', 'hover:bg-gray-600', 'transition-colors');
+                    summarizeBtn.onclick = () => summarizeText(originalText);
+                    actionsDiv.appendChild(summarizeBtn);
+
+                    // Speak button
+                    const speakBtn = document.createElement('button');
+                    speakBtn.innerHTML = `
+                        <span class="text-sm font-semibold">✨Suniye✨</span>
+                    `;
+                    speakBtn.classList.add('bg-gray-700', 'text-white', 'p-2', 'rounded-full', 'hover:bg-gray-600', 'transition-colors');
+                    speakBtn.onclick = () => textToSpeech(originalText);
+                    actionsDiv.appendChild(speakBtn);
+
+                    messageBubble.appendChild(actionsDiv);
+                }
+            }
+            
+            messageContainer.appendChild(messageBubble);
+            chatHistory.appendChild(messageContainer);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const userMessage = chatInput.value.trim();
+            if (userMessage === '') {
+                return;
+            }
+
+            addMessage(userMessage, true);
+            chatInput.value = '';
+
+            const thinkingMessageContainer = document.createElement('div');
+            thinkingMessageContainer.classList.add('flex', 'justify-start', 'thinking-message');
+            thinkingMessageContainer.innerHTML = `
+                <div class="bg-gray-800 text-gray-200 rounded-2xl p-4 max-w-[80%] shadow-sm">
+                    <p class="animate-pulse">...</p>
+                </div>
+            `;
+            chatHistory.appendChild(thinkingMessageContainer);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+            try {
+                if (isImageMode) {
+                    await generateImage(userMessage);
+                } else {
+                    await generateText(userMessage);
+                }
+            } finally {
+                if (thinkingMessageContainer) {
+                    thinkingMessageContainer.remove();
+                }
+            }
+        }
+
+        async function generateText(prompt) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }],
+                systemInstruction: {
+                    parts: [{ text: "You are Gemini, a large language model trained by Google. Respond in a helpful and conversational manner." }]
+                },
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (aiResponse) {
+                addMessage(aiResponse, false, false, aiResponse);
+            } else {
+                addMessage("Sorry, I couldn't generate a response at this time. Please try again.", false);
+            }
+        }
+
+        async function generateImage(prompt) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+
+            const payload = { 
+                instances: { prompt: prompt }, 
+                parameters: { "sampleCount": 1 } 
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            const base64Data = result.predictions?.[0]?.bytesBase64Encoded;
+
+            if (base64Data) {
+                const imageUrl = `data:image/png;base64,${base64Data}`;
+                addMessage(imageUrl, false, true);
+            } else {
+                addMessage("Sorry, I couldn't generate an image. Please try a different prompt.", false);
+            }
+        }
+
+        async function textToSpeech(text) {
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                
+                const payload = {
+                    contents: [{
+                        parts: [{ text: text }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Puck" }
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                    const sampleRate = parseInt(mimeType.match(/rate=(\d+)/)[1], 10);
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+                    
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                } else {
+                    console.error("Audio data not found in response.");
+                }
+            } catch (error) {
+                console.error("Failed to generate or play audio:", error);
+            }
+        }
+
+        async function summarizeText(text) {
+            try {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{
+                        parts: [{ text: "Summarize the following text in one or two sentences: " + text }]
+                    }],
+                    systemInstruction: {
+                        parts: [{ text: "You are Gemini, a helpful text summarizer. Provide a concise summary." }]
+                    },
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const summary = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (summary) {
+                    addMessage("Summary: " + summary, false);
+                } else {
+                    addMessage("Sorry, I couldn't summarize the text.", false);
+                }
+
+            } catch (error) {
+                console.error("Failed to summarize text:", error);
+            }
+        }
+
+        modeBtn.addEventListener('click', () => {
+            isImageMode = !isImageMode;
+            if (isImageMode) {
+                chatInput.placeholder = "Describe the image you want to create...";
+                modeBtn.classList.remove('bg-gray-700');
+                modeBtn.classList.add('bg-indigo-600', 'text-white');
+            } else {
+                chatInput.placeholder = "Message Gemini...";
+                modeBtn.classList.remove('bg-indigo-600', 'text-white');
+                modeBtn.classList.add('bg-gray-700');
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+
+</body>
+</html>
